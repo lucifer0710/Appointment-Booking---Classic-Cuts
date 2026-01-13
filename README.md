@@ -2,9 +2,9 @@
 
 A real-time appointment booking web application built with **HTML**, **CSS**, **JavaScript**, and **Firebase**. This system allows customers to book slots instantly and allows the barber to see updates live on their own device without refreshing.
 
-🚀 Live Demo for CUSTOMER VIEW ---    *barberhcut.vercel.app*
+🚀 Live Demo for CUSTOMER VIEW ---    *classiccuts.vercel.app*
 ---
-🚀 Live Demo for BARBER VIEW ---    *barberhcut.vercel.app/admin.html*
+🚀 Live Demo for BARBER VIEW ---    *classiccuts.vercel.app/admin.html*
 ---
 
 ## ✨ Features
