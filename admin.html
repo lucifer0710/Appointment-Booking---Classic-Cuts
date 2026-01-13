@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Barber Admin | Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Theme Colors */
+            --bg-color: #001233;
+            --surface-color: #002855;
+            
+            /* Status Colors */
+            --status-green: #00c853; 
+            --status-red: #D62828;
+            
+            /* Branding Colors */
+            --brand-blue: #001233;
+            --brand-white: #ffffff;
+            --brand-red: #D62828;
+
+            --text-white: #ffffff;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            color: #e0e0e0;
+            margin: 0;
+            padding: 20px;
+
+            /* --- BARBER POLE BACKGROUND --- */
+            background-color: var(--bg-color);
+            background-image: repeating-linear-gradient(
+                45deg,
+                var(--brand-blue) 0px,
+                var(--brand-blue) 40px,
+                var(--brand-white) 40px,
+                var(--brand-white) 50px,
+                var(--brand-red) 50px,
+                var(--brand-red) 90px,
+                var(--brand-white) 90px,
+                var(--brand-white) 100px
+            );
+            background-attachment: fixed;
+        }
+
+        /* --- Table / List Style --- */
+        .card-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: var(--surface-color);
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+            border: 2px solid white;
+        }
+
+        table { width: 100%; border-collapse: collapse; }
+        
+        /* The header line is now Green to indicate "Dashboard Ready" */
+        thead { background: #001830; border-bottom: 4px solid var(--status-green); }
+        th { 
+            text-align: left; 
+            padding: 18px; 
+            color: var(--status-green); 
+            font-weight: 600; 
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        td { 
+            padding: 15px 18px; 
+            border-bottom: 1px solid #063c75; 
+            vertical-align: middle;
+        }
+        tr:last-child td { border-bottom: none; }
+        tr:hover { background: #023e8a; transition: 0.2s; }
+
+        /* Status Pills */
+        .badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            display: inline-block;
+        }
+        
+        /* FREE -> GREEN STYLE */
+        .badge-free { 
+            background: rgba(0, 200, 83, 0.15); 
+            color: var(--status-green); 
+            border: 1px solid var(--status-green); 
+        }
+        
+        /* BOOKED -> RED STYLE */
+        .badge-booked { 
+            background: rgba(214, 40, 40, 0.15); 
+            color: var(--status-red); 
+            border: 1px solid var(--status-red); 
+        }
+
+        .btn-cancel {
+            background: transparent;
+            border: 1px solid var(--status-red);
+            color: var(--status-red);
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: 0.2s;
+            font-weight: 600;
+        }
+        .btn-cancel:hover { background: var(--status-red); color: white; }
+
+        @media (max-width: 600px) {
+            th, td { font-size: 0.9rem; padding: 10px; }
+            .hide-mobile { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="card-container">
+        <div style="padding: 20px; border-bottom: 1px solid #063c75; display: flex; justify-content: space-between; background: #001f3f;">
+            <h2 style="color:white; margin:0;">✂️ Dashboard</h2>
+            <div style="color: var(--status-green); font-size: 0.9rem; align-self: center; font-weight: 600;">Live Updates</div>
+        </div>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>Time</th>
+                    <th>Status</th>
+                    <th>Client Name</th>
+                    <th class="hide-mobile">Phone</th>
+                    <th style="text-align: right;">Action</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                <tr><td colspan="5" style="text-align:center; padding: 30px; color: #a0c4ff;">Connecting...</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, onValue, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+        // --- PASTE THE SAME FIREBASE CONFIG HERE ---
+const firebaseConfig = {
+    apiKey: "AIzaSy...",
+    authDomain: "your-project.firebaseapp.com",
+    databaseURL: "[https://your-project-default-rtdb.firebaseio.com](https://your-project-default-rtdb.firebaseio.com)",
+    projectId: "your-project",
+    storageBucket: "your-project.appspot.com",
+    messagingSenderId: "123...",
+    appId: "1:123..."
+};
+
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        const generateSlots = () => {
+            const times = [];
+            for (let i = 9; i <= 17; i++) { 
+                const period = i >= 12 ? 'PM' : 'AM';
+                let hour = i > 12 ? i - 12 : i;
+                times.push(`${hour}:00 ${period}`);
+                if (i < 17) times.push(`${hour}:30 ${period}`);
+            }
+            return times;
+        };
+        const allSlots = generateSlots();
+
+        const bookingsRef = ref(db, 'bookings');
+        onValue(bookingsRef, (snapshot) => {
+            const data = snapshot.val() || {};
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+
+            allSlots.forEach(time => {
+                const slotId = time.replace(/[:\s]/g, '');
+                const booking = data[slotId];
+                const isBooked = !!booking;
+                
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td style="font-weight: bold; color: #fff;">${time}</td>
+                    <td><span class="badge ${isBooked ? 'badge-booked' : 'badge-free'}">${isBooked ? 'BOOKED' : 'FREE'}</span></td>
+                    <td style="color: ${isBooked ? '#fff' : '#a0c4ff'}">${booking ? booking.name : '-'}</td>
+                    <td class="hide-mobile" style="color: #8da9c4; font-family: monospace;">${booking ? booking.phone : '-'}</td>
+                    <td style="text-align: right;">
+                        ${isBooked ? `<button class="btn-cancel" onclick="cancelBooking('${slotId}')">Cancel</button>` : ''}
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        });
+
+        window.cancelBooking = (slotId) => {
+            if(confirm("Are you sure you want to cancel this booking?")) {
+                remove(ref(db, 'bookings/' + slotId));
+            }
+        };
+    </script>
+</body>
+</html>
