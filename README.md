@@ -1,10 +1,13 @@
 # 💈 Barber Shop Booking System (Hardened & Secured)
-
-A secure, real-time appointment booking web application built with **HTML**, **CSS**, **Vanilla JavaScript**, and **Firebase**. 
-
-This system allows customers to view availability and book/cancel slots instantly, and provides a password-protected admin dashboard for the barber to view and manage all bookings in real time.
-
 ---
+🚀 Live Demo for CUSTOMER VIEW ---    *classiccuts.vercel.app*
+---
+🚀 Live Demo for BARBER VIEW ---    *classiccuts.vercel.app/admin.html*
+---
+---
+A secure, real-time appointment booking web application built with **HTML**, **CSS**, **Vanilla JavaScript**, and **Firebase**. This system allows customers to view availability and book/cancel slots instantly, and provides a password-protected admin dashboard for the barber to view and manage all bookings in real time.
+
+
 
 ## 🔒 Security Enhancements & Hardening
 
