@@ -1,0 +1,209 @@
+:root {
+    /* Theme Colors */
+    --bg-color: #001233;
+    --surface-color: #002855;
+    
+    /* Status Colors */
+    --status-green: #00c853; 
+    --status-red: #D62828;
+    
+    /* Branding Colors */
+    --brand-blue: #001233;
+    --brand-white: #ffffff;
+    --brand-red: #D62828;
+
+    --text-white: #ffffff;
+}
+
+body {
+    font-family: 'Poppins', sans-serif;
+    color: #e0e0e0;
+    margin: 0;
+    padding: 20px;
+
+    /* --- BARBER POLE BACKGROUND --- */
+    background-color: var(--bg-color);
+    background-image: repeating-linear-gradient(
+        45deg,
+        var(--brand-blue) 0px,
+        var(--brand-blue) 40px,
+        var(--brand-white) 40px,
+        var(--brand-white) 50px,
+        var(--brand-red) 50px,
+        var(--brand-red) 90px,
+        var(--brand-white) 90px,
+        var(--brand-white) 100px
+    );
+    background-attachment: fixed;
+}
+
+/* --- Table / List Style --- */
+.card-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    background: var(--surface-color);
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+    border: 2px solid white;
+}
+
+table { width: 100%; border-collapse: collapse; }
+
+/* The header line is now Green to indicate "Dashboard Ready" */
+thead { background: #001830; border-bottom: 4px solid var(--status-green); }
+th { 
+    text-align: left; 
+    padding: 18px; 
+    color: var(--status-green); 
+    font-weight: 600; 
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+td { 
+    padding: 15px 18px; 
+    border-bottom: 1px solid #063c75; 
+    vertical-align: middle;
+}
+tr:last-child td { border-bottom: none; }
+tr:hover { background: #023e8a; transition: 0.2s; }
+
+/* Status Pills */
+.badge {
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    display: inline-block;
+}
+
+/* FREE -> GREEN STYLE */
+.badge-free { 
+    background: rgba(0, 200, 83, 0.15); 
+    color: var(--status-green); 
+    border: 1px solid var(--status-green); 
+}
+
+/* BOOKED -> RED STYLE */
+.badge-booked { 
+    background: rgba(214, 40, 40, 0.15); 
+    color: var(--status-red); 
+    border: 1px solid var(--status-red); 
+}
+
+.btn-cancel {
+    background: transparent;
+    border: 1px solid var(--status-red);
+    color: var(--status-red);
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: 0.2s;
+    font-weight: 600;
+}
+.btn-cancel:hover { background: var(--status-red); color: white; }
+
+/* Login styles */
+.login-overlay {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: var(--bg-color);
+    background-image: repeating-linear-gradient(
+        45deg,
+        var(--brand-blue) 0px,
+        var(--brand-blue) 40px,
+        var(--brand-white) 40px,
+        var(--brand-white) 50px,
+        var(--brand-red) 50px,
+        var(--brand-red) 90px,
+        var(--brand-white) 90px,
+        var(--brand-white) 100px
+    );
+    background-attachment: fixed;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+}
+.login-container {
+    background: var(--surface-color);
+    padding: 40px;
+    border-radius: 10px;
+    border: 2px solid white;
+    width: 90%;
+    max-width: 400px;
+    text-align: center;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+}
+.login-container h2 {
+    margin-top: 0;
+    color: white;
+    font-size: 1.8rem;
+    margin-bottom: 25px;
+    text-shadow: 2px 2px 0px var(--status-red);
+}
+.login-input {
+    width: 100%;
+    padding: 15px;
+    margin-bottom: 15px;
+    background: #001233;
+    border: 1px solid #04468f;
+    border-radius: 8px;
+    color: white;
+    font-size: 1rem;
+    box-sizing: border-box;
+    outline: none;
+    transition: 0.2s;
+}
+.login-input:focus {
+    border-color: var(--status-green);
+    box-shadow: 0 0 8px rgba(0, 200, 83, 0.3);
+}
+.btn-login {
+    width: 100%;
+    padding: 15px;
+    background: var(--status-green);
+    color: #000;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: 0.2s;
+}
+.btn-login:hover {
+    background: #00e676;
+    box-shadow: 0 0 15px rgba(0, 200, 83, 0.4);
+}
+.login-error {
+    color: var(--status-red);
+    margin-top: 15px;
+    font-size: 0.9rem;
+    font-weight: bold;
+}
+.btn-logout {
+    background: transparent;
+    border: 1px solid #a0c4ff;
+    color: #a0c4ff;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-weight: 600;
+    transition: 0.2s;
+}
+.btn-logout:hover {
+    background: rgba(160, 196, 255, 0.1);
+    color: white;
+}
+
+@media (max-width: 600px) {
+    th, td { font-size: 0.9rem; padding: 10px; }
+    .hide-mobile { display: none; }
+}
