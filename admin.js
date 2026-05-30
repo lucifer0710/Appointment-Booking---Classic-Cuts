@@ -71,7 +71,7 @@ onAuthStateChanged(auth, (user) => {
     errorDiv.innerText = '';
 
     if (user) {
-        if (user.email === 'singlakunal313@gmail.com') {
+        if (user.email === 'admin@gmail.com') {
             loginOverlay.style.display = 'none';
             loadDashboard();
         } else {

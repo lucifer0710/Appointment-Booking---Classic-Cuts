@@ -10,7 +10,7 @@ This system allows customers to view availability and book/cancel slots instantl
 
 We have audited and rewritten the application structure and security rules to resolve vulnerabilities:
 
-1. **PII Protection:** Client booking details (names and phone numbers) are stored in a private `/bookings` node that is **restricted only to the authenticated admin** (`singlakunal313@gmail.com`). Standard users can only read `/public_slots`, which reveals whether a slot is booked or free without exposing any personal contact details.
+1. **PII Protection:** Client booking details (names and phone numbers) are stored in a private `/bookings` node that is **restricted only to the authenticated admin** (`admin@gmail.com`). Standard users can only read `/public_slots`, which reveals whether a slot is booked or free without exposing any personal contact details.
 2. **Secure Cancellations:** Instead of checking phone numbers client-side (which is easily bypassable), standard clients submit a status update with a verification phone number. The Firebase Realtime Database Security Rules perform a secure, server-side validation against the database records to approve or reject the cancellation.
 3. **Admin Dashboard Authentication:** The admin panel (`admin.html`) is protected by a matching styled login screen, requiring Firebase Authentication to access any customer dashboard data.
 
@@ -36,7 +36,7 @@ To use this system, you need to enable Email/Password login and create your admi
 2. Go to **Authentication > Sign-in method**.
 3. Enable the **Email/Password** provider and save.
 4. Go to the **Users** tab and click **Add user**.
-5. Enter the administrator email: `singlakunal313@gmail.com`
+5. Enter the administrator email: `admin@gmail.com`
 6. Set a secure password and click **Add user**.
 
 ### 2. Configure Firebase Security Rules
@@ -48,13 +48,13 @@ Deploy these rules to your Realtime Database to restrict reads/writes and enforc
   "rules": {
     "bookings": {
       // Only the admin can read booking details (contains client names and phone numbers)
-      ".read": "auth != null && auth.token.email == 'singlakunal313@gmail.com'",
+      ".read": "auth != null && auth.token.email == 'admin@gmail.com'",
       "$slotId": {
         // Admin can write anything.
         // A client can write to create a new booking if the slot is free.
         // A client can update status to 'cancelled' if they provide the matching phone number.
         ".write": "
-          (auth != null && auth.token.email == 'singlakunal313@gmail.com') ||
+          (auth != null && auth.token.email == 'admin@gmail.com') ||
           (
             (!data.exists() || data.child('status').val() == 'cancelled') && 
             newData.exists() && 
@@ -80,7 +80,7 @@ Deploy these rules to your Realtime Database to restrict reads/writes and enforc
         // A client can mark a slot as booked if it is free.
         // A client can delete a public slot if it is booked.
         ".write": "
-          (auth != null && auth.token.email == 'singlakunal313@gmail.com') ||
+          (auth != null && auth.token.email == 'admin@gmail.com') ||
           (!data.exists() && newData.exists() && newData.child('booked').val() == true) ||
           (data.exists() && !newData.exists())
         "
