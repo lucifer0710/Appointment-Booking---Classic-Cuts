@@ -17,7 +17,16 @@ let publicSlots = {};
 async function fetchSlots() {
     try {
         const res = await fetch('/api/slots');
-        if (!res.ok) throw new Error('Failed to fetch slots');
+        if (!res.ok) {
+            let errorMsg = `Failed to fetch slots (Status ${res.status})`;
+            try {
+                const errData = await res.json();
+                if (errData && errData.error) {
+                    errorMsg += `: ${errData.error}`;
+                }
+            } catch (_) {}
+            throw new Error(errorMsg);
+        }
         publicSlots = await res.json();
         renderGrid(publicSlots);
     } catch (err) {
@@ -97,9 +106,13 @@ window.handleBook = async () => {
             })
         });
 
-        const data = await res.json();
+        let data = {};
+        try {
+            data = await res.json();
+        } catch (_) {}
+
         if (!res.ok) {
-            return alert(data.error || "Booking failed.");
+            return alert(data.error || `Booking failed (Status ${res.status}).`);
         }
 
         closeModal();
@@ -125,9 +138,13 @@ window.handleCancel = async () => {
             })
         });
 
-        const data = await res.json();
+        let data = {};
+        try {
+            data = await res.json();
+        } catch (_) {}
+
         if (!res.ok) {
-            return alert(data.error || "Incorrect Phone Number or booking not found.");
+            return alert(data.error || `Incorrect Phone Number or booking not found (Status ${res.status}).`);
         }
 
         closeModal();

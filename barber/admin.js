@@ -29,7 +29,14 @@ async function loadDashboard() {
         }
 
         if (!res.ok) {
-            throw new Error('Failed to load bookings');
+            let errorMsg = `Failed to load bookings (Status ${res.status})`;
+            try {
+                const errData = await res.json();
+                if (errData && errData.error) {
+                    errorMsg += `: ${errData.error}`;
+                }
+            } catch (_) {}
+            throw new Error(errorMsg);
         }
 
         const data = await res.json();
@@ -103,10 +110,14 @@ window.handleLogin = async () => {
             },
             body: JSON.stringify({ email, password })
         });
-        const data = await res.json();
+        
+        let data = {};
+        try {
+            data = await res.json();
+        } catch (_) {}
         
         if (!res.ok) {
-            errorDiv.innerText = "Login failed: " + (data.error || "Unknown error");
+            errorDiv.innerText = "Login failed: " + (data.error || `HTTP error ${res.status}`);
             return;
         }
 
@@ -135,9 +146,14 @@ window.cancelBooking = async (slotId) => {
                 },
                 body: JSON.stringify({ slotId })
             });
-            const data = await res.json();
+            
+            let data = {};
+            try {
+                data = await res.json();
+            } catch (_) {}
+
             if (!res.ok) {
-                return alert(data.error || "Failed to cancel booking.");
+                return alert(data.error || `Failed to cancel booking (Status ${res.status}).`);
             }
             alert("Booking cancelled successfully.");
             loadDashboard(); // Refresh table immediately
