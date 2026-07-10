@@ -1,21 +1,3 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getDatabase, ref, set, onValue, remove, get, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
-
-// --- PASTE YOUR FIREBASE CONFIG HERE ---
-const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_AUTH_DOMAIN",
-  databaseURL: "YOUR_DATABASE_URL",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_STORAGE_BUCKET",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID",
-  measurementId: "YOUR_MEASUREMENT_ID"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
-
 let selectedTime = '';
 const allSlots = generateSlots();
 
@@ -30,11 +12,22 @@ function generateSlots() {
     return times;
 }
 
-const publicSlotsRef = ref(db, 'public_slots');
-onValue(publicSlotsRef, (snapshot) => {
-    const data = snapshot.val() || {};
-    renderGrid(data);
-});
+let publicSlots = {};
+
+async function fetchSlots() {
+    try {
+        const res = await fetch('/api/slots');
+        if (!res.ok) throw new Error('Failed to fetch slots');
+        publicSlots = await res.json();
+        renderGrid(publicSlots);
+    } catch (err) {
+        console.error("Error fetching slots:", err);
+    }
+}
+
+// Initial fetch & Polling (equivalent to Realtime Database listener)
+fetchSlots();
+setInterval(fetchSlots, 5000);
 
 function renderGrid(publicSlots) {
     const grid = document.getElementById('grid');
@@ -90,36 +83,56 @@ window.handleBook = async () => {
     const phone = document.getElementById('phone').value;
     if(!name || !phone) return alert("Please fill in all fields");
 
-    const snapshot = await get(ref(db, 'public_slots/' + window.selectedSlotId));
-    if (snapshot.exists()) return alert("Slot was just taken by someone else!");
+    try {
+        const res = await fetch('/api/book', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                slotId: window.selectedSlotId,
+                name,
+                phone,
+                time: selectedTime
+            })
+        });
 
-    const updates = {};
-    updates['bookings/' + window.selectedSlotId] = {
-        name,
-        phone,
-        time: selectedTime,
-        status: 'booked'
-    };
-    updates['public_slots/' + window.selectedSlotId] = {
-        booked: true,
-        time: selectedTime
-    };
+        const data = await res.json();
+        if (!res.ok) {
+            return alert(data.error || "Booking failed.");
+        }
 
-    update(ref(db), updates).then(() => {
         closeModal();
-    }).catch((e) => alert("Error: " + e.message));
+        fetchSlots(); // Refresh grid immediately
+    } catch (e) {
+        alert("Error: " + e.message);
+    }
 };
 
 window.handleCancel = async () => {
     const phone = document.getElementById('cancelPhone').value;
     if (!phone) return alert("Please enter your phone number");
 
-    const updates = {};
-    updates[`bookings/${window.selectedSlotId}/status`] = 'cancelled';
-    updates[`bookings/${window.selectedSlotId}/verifyPhone`] = phone;
-    updates[`public_slots/${window.selectedSlotId}`] = null;
+    try {
+        const res = await fetch('/api/cancel', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                slotId: window.selectedSlotId,
+                phone
+            })
+        });
 
-    update(ref(db), updates).then(() => {
+        const data = await res.json();
+        if (!res.ok) {
+            return alert(data.error || "Incorrect Phone Number or booking not found.");
+        }
+
         closeModal();
-    }).catch((e) => alert("Incorrect Phone Number or booking not found."));
+        fetchSlots(); // Refresh grid immediately
+    } catch (e) {
+        alert("Error: " + e.message);
+    }
 };

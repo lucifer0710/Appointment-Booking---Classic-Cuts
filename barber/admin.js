@@ -1,23 +1,3 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getDatabase, ref, onValue, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
-import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-
-// --- PASTE THE SAME FIREBASE CONFIG HERE ---
-const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_AUTH_DOMAIN",
-  databaseURL: "YOUR_DATABASE_URL",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_STORAGE_BUCKET",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID",
-  measurementId: "YOUR_MEASUREMENT_ID"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
-const auth = getAuth(app);
-
 const generateSlots = () => {
     const times = [];
     for (let i = 9; i <= 17; i++) { 
@@ -30,14 +10,29 @@ const generateSlots = () => {
 };
 const allSlots = generateSlots();
 
-let bookingsUnsubscribe = null;
+let adminToken = localStorage.getItem('adminToken');
+let dashboardInterval = null;
 
-function loadDashboard() {
-    if (bookingsUnsubscribe) bookingsUnsubscribe();
+async function loadDashboard() {
+    if (!adminToken) return;
 
-    const bookingsRef = ref(db, 'bookings');
-    bookingsUnsubscribe = onValue(bookingsRef, (snapshot) => {
-        const data = snapshot.val() || {};
+    try {
+        const res = await fetch('/api/admin/bookings', {
+            headers: {
+                'Authorization': `Bearer ${adminToken}`
+            }
+        });
+        
+        if (res.status === 401 || res.status === 403) {
+            handleLogout();
+            return;
+        }
+
+        if (!res.ok) {
+            throw new Error('Failed to load bookings');
+        }
+
+        const data = await res.json();
         const tbody = document.getElementById('tableBody');
         tbody.innerHTML = '';
 
@@ -58,38 +53,38 @@ function loadDashboard() {
             `;
             tbody.appendChild(tr);
         });
-    }, (error) => {
+    } catch (error) {
         console.error("Database read error: ", error);
-        document.getElementById('tableBody').innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 30px; color: var(--status-red);">Permission Denied: ${error.message}</td></tr>`;
-    });
+        document.getElementById('tableBody').innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 30px; color: var(--status-red);">Error: ${error.message}</td></tr>`;
+    }
 }
 
-// Authentication State Listener
-onAuthStateChanged(auth, (user) => {
+function checkAuthState() {
     const loginOverlay = document.getElementById('loginOverlay');
     const errorDiv = document.getElementById('loginError');
-    errorDiv.innerText = '';
+    if (errorDiv) errorDiv.innerText = '';
 
-    if (user) {
-        if (user.email === 'admin@gmail.com') {
-            loginOverlay.style.display = 'none';
-            loadDashboard();
-        } else {
-            errorDiv.innerText = "Access denied: Unauthorized administrator email.";
-            signOut(auth);
+    if (adminToken) {
+        loginOverlay.style.display = 'none';
+        loadDashboard();
+        if (!dashboardInterval) {
+            dashboardInterval = setInterval(loadDashboard, 5000);
         }
     } else {
-        if (bookingsUnsubscribe) {
-            bookingsUnsubscribe();
-            bookingsUnsubscribe = null;
+        if (dashboardInterval) {
+            clearInterval(dashboardInterval);
+            dashboardInterval = null;
         }
         loginOverlay.style.display = 'flex';
         document.getElementById('tableBody').innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 30px; color: #a0c4ff;">Please login to view dashboard.</td></tr>';
     }
-});
+}
+
+// Initial state check
+checkAuthState();
 
 // Event Handlers
-window.handleLogin = () => {
+window.handleLogin = async () => {
     const email = document.getElementById('adminEmail').value;
     const password = document.getElementById('adminPassword').value;
     const errorDiv = document.getElementById('loginError');
@@ -100,23 +95,54 @@ window.handleLogin = () => {
         return;
     }
 
-    signInWithEmailAndPassword(auth, email, password)
-        .catch(err => {
-            errorDiv.innerText = "Login failed: " + err.message;
+    try {
+        const res = await fetch('/api/admin/login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ email, password })
         });
+        const data = await res.json();
+        
+        if (!res.ok) {
+            errorDiv.innerText = "Login failed: " + (data.error || "Unknown error");
+            return;
+        }
+
+        adminToken = data.token;
+        localStorage.setItem('adminToken', adminToken);
+        checkAuthState();
+    } catch (err) {
+        errorDiv.innerText = "Login failed: " + err.message;
+    }
 };
 
 window.handleLogout = () => {
-    signOut(auth);
+    adminToken = null;
+    localStorage.removeItem('adminToken');
+    checkAuthState();
 };
 
-window.cancelBooking = (slotId) => {
+window.cancelBooking = async (slotId) => {
     if(confirm("Are you sure you want to cancel this booking?")) {
-        const updates = {};
-        updates['bookings/' + slotId] = null;
-        updates['public_slots/' + slotId] = null;
-        update(ref(db), updates).then(() => {
+        try {
+            const res = await fetch('/api/admin/cancel-booking', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${adminToken}`
+                },
+                body: JSON.stringify({ slotId })
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                return alert(data.error || "Failed to cancel booking.");
+            }
             alert("Booking cancelled successfully.");
-        }).catch(e => alert("Error: " + e.message));
+            loadDashboard(); // Refresh table immediately
+        } catch (e) {
+            alert("Error: " + e.message);
+        }
     }
 };
